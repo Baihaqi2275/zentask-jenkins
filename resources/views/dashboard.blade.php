@@ -1,486 +1,392 @@
-@extends('layouts.dashboard')
+@extends('layouts.dashboard-layout')
 
 @section('content')
+<div class="space-y-6">
 
-    <!-- Header Section dengan Gradient Text -->
-    <div class="mb-10">
-        <h1 class="text-6xl font-black mb-3 gradient-text">
-            ✨ ZenTask Dashboard
-        </h1>
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mt-6">
-            <div>
-                <p class="text-3xl font-bold text-white mb-1">
+    {{-- Hero Section --}}
+    <div class="relative overflow-hidden">
+        <div class="relative z-10">
+            {{-- Welcome Header --}}
+            <div class="flex items-center gap-3 mb-2">
+                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center animate-pulse">
+                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-4xl lg:text-5xl font-bold text-white glow-text-blue">
+                        ZenTask
+                    </h1>
+                </div>
+            </div>
+
+            {{-- Greeting & Date --}}
+            <div class="mt-6 space-y-2">
+                <h2 class="text-2xl lg:text-3xl font-bold text-white">
                     Halo, {{ Auth::user()->name }}
-                </p>
-                <p class="text-blue-200 text-base">{{ now()->format('l, d F Y') }}</p>
-            </div>
-            <div class="premium-card px-8 py-4">
-                <p class="text-white/80 text-sm font-medium mb-1">Total Produktivitas</p>
-                <p class="text-5xl font-black gradient-text-green">
-                    {{ $tasks->count() > 0 ? round(($tasks->where('status', 'completed')->count() / $tasks->count()) * 100) : 0 }}%
+                </h2>
+                <p class="text-gray-400 text-lg">
+                    {{ now()->format('l, d F Y') }}
                 </p>
             </div>
         </div>
+
+        {{-- Decorative Background --}}
+        <div class="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl -z-10"></div>
+        <div class="absolute bottom-0 left-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl -z-10"></div>
     </div>
 
-    {{-- STATISTICS CARDS dengan Style Premium --}}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+    {{-- Statistics Cards Grid --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
 
-        {{-- =========================
-        [STATS VAR] HITUNG SEKALI (BIAR KONSISTEN)
-        ========================== --}}
-        @php
-            // Total
-            $totalAll = $tasks->count();
-
-            // Completed = completed
-            $totalCompleted = $tasks->where('status', 'completed')->count();
-
-            // In Progress
-            $totalInProgress = $tasks->where('status', 'in_progress')->count();
-
-            // Minggu ini (created_at >= 7 hari terakhir)
-            $totalThisWeek = $tasks->filter(function ($t) {
-                return $t->created_at && $t->created_at->gte(now()->subDays(7));
-            })->count();
-
-            // Deadline terdekat
-            $nearestTask = $tasks
-                ->where('status', 'in_progress')
-                ->whereNotNull('due_date')
-                ->sortBy('due_date')
-                ->first();
-
-            // Progress bar completed (%)
-            $completedPercent = $totalAll > 0 ? ($totalCompleted / $totalAll) * 100 : 0;
-        @endphp
-
-        <!-- Total Tasks Card -->
-        <div class="premium-card p-7 hover-lift group">
-            <div class="flex items-center justify-between mb-5">
-                <div class="icon-wrapper bg-blue-500/20">
-                    <svg class="w-9 h-9 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                </div>
-                <span class="badge badge-blue">+{{ $totalThisWeek }} minggu ini</span>
-            </div>
-            <p class="text-blue-200 text-sm font-semibold mb-2 uppercase tracking-wide">Total Kegiatan</p>
-            <p class="text-6xl font-black text-white mb-2">{{ $totalAll }}</p>
-            <div class="h-1 bg-blue-500/20 rounded-full overflow-hidden">
-                <div class="h-full bg-gradient-to-r from-blue-400 to-blue-600 w-full animate-shimmer"></div>
-            </div>
-        </div>
-
-        <!-- In Progress Card -->
-        <div class="premium-card p-7 hover-lift group">
-            <div class="flex items-center justify-between mb-5">
-                <div class="icon-wrapper bg-yellow-500/20">
-                    <svg class="w-9 h-9 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-                <span class="badge badge-yellow">Berjalan</span>
-            </div>
-            <p class="text-yellow-200 text-sm font-semibold mb-2 uppercase tracking-wide">In Progress</p>
-            <p class="text-6xl font-black text-white mb-2">{{ $totalInProgress }}</p>
-            <div class="h-1 bg-yellow-500/20 rounded-full overflow-hidden">
-                <div class="h-full bg-gradient-to-r from-yellow-400 to-yellow-600 w-2/3 animate-shimmer"></div>
-            </div>
-        </div>
-
-        <!-- Completed Tasks Card -->
-        <div class="premium-card p-7 hover-lift group">
-            <div class="flex items-center justify-between mb-5">
-                <div class="icon-wrapper bg-green-500/20">
-                    <svg class="w-9 h-9 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-                <span class="badge badge-green">Selesai</span>
-            </div>
-            <p class="text-green-200 text-sm font-semibold mb-2 uppercase tracking-wide">Task Completed</p>
-            <p class="text-6xl font-black text-white mb-3">{{ $totalCompleted }}</p>
-            <div class="h-3 bg-slate-700/50 rounded-full overflow-hidden">
-                <div class="h-full bg-gradient-to-r from-green-400 via-emerald-500 to-green-600 transition-all duration-700 rounded-full shadow-lg shadow-green-500/50"
-                     style="width: {{ $completedPercent }}%">
-                </div>
-            </div>
-        </div>
-
-        <!-- Deadline Card -->
-        <div class="premium-card p-7 hover-lift group">
-            <div class="flex items-center justify-between mb-5">
-                <div class="icon-wrapper bg-red-500/20">
-                    <svg class="w-9 h-9 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                </div>
-                <span class="badge badge-red">Urgent</span>
-            </div>
-
-            <p class="text-red-200 text-sm font-semibold mb-2 uppercase tracking-wide">Deadline Terdekat</p>
-
-            <p class="text-3xl font-black text-white mb-1">
-                {{ $nearestTask ? \Carbon\Carbon::parse($nearestTask->due_date)->format('d M Y') : 'Tidak ada' }}
-            </p>
-
-            @if($nearestTask)
-                <p class="text-sm text-red-300/80 mt-2 font-medium truncate">{{ $nearestTask->title }}</p>
-            @endif
-        </div>
-
-    </div>
-
-    {{-- =========================
-    UPCOMING TASKS (FULL WIDTH)
-    - preview: 3 task saja (deadline terdekat di kiri)
-    - modal: show all (urut deadline terdekat di atas)
-    ========================== --}}
-    @php
-        $in_progressSorted = $tasks
-            ->where('status', 'in_progress')
-            ->sortBy(function ($t) {
-                return $t->due_date
-                    ? \Carbon\Carbon::parse($t->due_date)->timestamp
-                    : PHP_INT_MAX; // null taruh paling bawah
-            })
-            ->values();
-
-        $in_progressTop3 = $in_progressSorted->take(3);
-        $in_progressCount = $in_progressSorted->count();
-    @endphp
-
-    <div class="grid grid-cols-1 gap-6">
-        <div class="col-span-1">
-            <div class="flex items-center justify-between mb-5">
-                <h3 class="text-4xl font-black text-white flex items-center gap-3">
-                    <span class="text-4xl">📋</span>
-                    Upcoming Tasks
-                </h3>
-
-                {{-- SHOW ALL (muncul jika > 3) --}}
-                @if($in_progressCount > 3)
-                    <button type="button" onclick="openUpcomingModal()"
-                            class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-blue-100 font-semibold transition">
-                        Show All ({{ $in_progressCount }})
-                    </button>
-                @endif
-            </div>
-
-            {{-- PREVIEW 3 CARD (HORIZONTAL) --}}
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                @forelse ($in_progressTop3 as $task)
-                    <div class="task-card group min-h-[170px] flex flex-col justify-between">
-                        <div>
-                            <h4 class="text-white font-bold text-xl mb-2 group-hover:text-blue-300 transition-colors">
-                                {{ $task->title }}
-                            </h4>
-
-                            @if(!empty($task->description))
-                                <p class="text-slate-300 text-sm mb-3 leading-relaxed">
-                                    {{ Str::limit($task->description, 80) }}
-                                </p>
-                            @endif
-                        </div>
-
-                        <div class="flex items-center gap-2 flex-wrap">
-                            @if($task->due_date)
-                                <span class="badge badge-blue">
-                                    📅 {{ \Carbon\Carbon::parse($task->due_date)->format('d M Y') }}
-                                </span>
-                            @endif
-
-                            <span class="badge badge-purple">IN PROGRESS</span>
-                        </div>
+        {{-- Total Tasks Card --}}
+        <a href="{{ route('dashboard') }}"
+           class="glass-card rounded-2xl p-6 relative overflow-hidden group hover:scale-105 transition-transform duration-300">
+            <div class="relative z-10">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-14 h-14 bg-blue-500/20 rounded-2xl flex items-center justify-center">
+                        <svg class="w-7 h-7 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
                     </div>
-                @empty
-                    <div class="premium-card p-8 text-center">
-                        <p class="text-slate-300 text-sm">Tidak ada upcoming task 📌</p>
+                    <span class="px-3 py-1 bg-blue-500/20 text-blue-400 text-xs font-semibold rounded-full">
+                        +12 MINGGU INI
+                    </span>
+                </div>
+
+                <p class="text-gray-400 text-sm font-medium mb-2">TOTAL KEGIATAN</p>
+                <div class="flex items-end gap-2">
+                    <h3 class="text-5xl font-bold text-white">{{ Auth::user()->tasks()->count() }}</h3>
+                </div>
+
+                {{-- Progress Bar --}}
+                <div class="mt-4 h-2 bg-slate-800/50 rounded-full overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full"
+                         style="width: 100%"></div>
+                </div>
+            </div>
+            <div class="absolute -bottom-4 -right-4 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl"></div>
+        </a>
+
+        {{-- In Progress Card --}}
+        <a href="{{ route('dashboard', ['status' => 'berjalan']) }}"
+           class="glass-card rounded-2xl p-6 relative overflow-hidden group hover:scale-105 transition-transform duration-300">
+            <div class="relative z-10">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-14 h-14 bg-yellow-500/20 rounded-2xl flex items-center justify-center">
+                        <svg class="w-7 h-7 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
                     </div>
-                @endforelse
+                    <span class="px-3 py-1 bg-yellow-500/20 text-yellow-400 text-xs font-semibold rounded-full">
+                        BERJALAN
+                    </span>
+                </div>
+
+                <p class="text-gray-400 text-sm font-medium mb-2">IN PROGRESS</p>
+                <div class="flex items-end gap-2">
+                    <h3 class="text-5xl font-bold text-white">{{ Auth::user()->tasks()->where('status', 'berjalan')->count() }}</h3>
+                </div>
+
+                {{-- Progress Bar --}}
+                <div class="mt-4 h-2 bg-slate-800/50 rounded-full overflow-hidden">
+                    @php
+                        $totalTasks = Auth::user()->tasks()->count();
+                        $inProgressTasks = Auth::user()->tasks()->where('status', 'berjalan')->count();
+                        $progressPercentage = $totalTasks > 0 ? ($inProgressTasks / $totalTasks) * 100 : 0;
+                    @endphp
+                    <div class="h-full bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full"
+                         style="width: {{ $progressPercentage }}%"></div>
+                </div>
             </div>
-        </div>
-    </div>
+            <div class="absolute -bottom-4 -right-4 w-24 h-24 bg-yellow-500/10 rounded-full blur-2xl"></div>
+        </a>
 
-    {{-- =========================
-    MODAL POPUP "SHOW ALL"
-    ========================== --}}
-    <div id="upcomingModal" class="fixed inset-0 z-[9999] hidden items-start justify-center p-4 sm:p-6">
-        {{-- Backdrop --}}
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeUpcomingModal()"></div>
+        {{-- Completed Card --}}
+        <a href="{{ route('dashboard', ['status' => 'selesai']) }}"
+           class="glass-card rounded-2xl p-6 relative overflow-hidden group hover:scale-105 transition-transform duration-300">
+            <div class="relative z-10">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center">
+                        <svg class="w-7 h-7 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <span class="px-3 py-1 bg-green-500/20 text-green-400 text-xs font-semibold rounded-full">
+                        SELESAI
+                    </span>
+                </div>
 
-        {{-- Modal Box --}}
-        <div class="relative w-full max-w-3xl mt-24 rounded-2xl bg-slate-950/70 border border-white/10 backdrop-blur-xl shadow-2xl overflow-hidden max-h-[calc(100vh-8rem)]">
+                <p class="text-gray-400 text-sm font-medium mb-2">TASK COMPLETED</p>
+                <div class="flex items-end gap-2">
+                    <h3 class="text-5xl font-bold text-white">{{ Auth::user()->tasks()->where('status', 'selesai')->count() }}</h3>
+                </div>
 
-            <div class="flex items-center justify-between px-6 py-4 border-b border-white/10">
-                <h4 class="text-white font-black text-xl">Semua Upcoming Tasks</h4>
-
-                <button type="button" onclick="closeUpcomingModal()"
-                        class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-blue-100 font-semibold transition">
-                    Tutup
-                </button>
+                {{-- Progress Bar --}}
+                <div class="mt-4 h-2 bg-slate-800/50 rounded-full overflow-hidden">
+                    @php
+                        $completedTasks = Auth::user()->tasks()->where('status', 'selesai')->count();
+                        $completedPercentage = $totalTasks > 0 ? ($completedTasks / $totalTasks) * 100 : 0;
+                    @endphp
+                    <div class="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"
+                         style="width: {{ $completedPercentage }}%"></div>
+                </div>
             </div>
+            <div class="absolute -bottom-4 -right-4 w-24 h-24 bg-green-500/10 rounded-full blur-2xl"></div>
+        </a>
 
-            <div class="p-6 overflow-y-auto space-y-4" style="max-height: calc(100vh - 14rem);">
+        {{-- Nearest Deadline Card --}}
+        <a href="{{ route('dashboard', ['view' => 'deadlines']) }}"
+           class="glass-card rounded-2xl p-6 relative overflow-hidden group hover:scale-105 transition-transform duration-300">
+            <div class="relative z-10">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-14 h-14 bg-red-500/20 rounded-2xl flex items-center justify-center">
+                        <svg class="w-7 h-7 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                    </div>
+                    <span class="px-3 py-1 bg-red-500/20 text-red-400 text-xs font-semibold rounded-full">
+                        URGENT
+                    </span>
+                </div>
+
+                <p class="text-gray-400 text-sm font-medium mb-2">DEADLINE TERDEKAT</p>
                 @php
-                    // Modal: pakai urutan yang sama (deadline terdekat paling atas)
-                    $in_progressModal = $in_progressSorted;
+                    $nearestTask = Auth::user()->tasks()
+                        ->where('status', 'berjalan')
+                        ->whereNotNull('due_date')
+                        ->orderBy('due_date', 'asc')
+                        ->first();
                 @endphp
 
-                @forelse($in_progressModal as $task)
-                    <div class="task-card group min-h-[170px] flex flex-col justify-between">
-                        <div>
-                            <h4 class="text-white font-bold text-xl mb-2 group-hover:text-blue-300 transition-colors">
-                                {{ $task->title }}
-                            </h4>
-
-                            @if(!empty($task->description))
-                                <p class="text-slate-300 text-sm mb-3 leading-relaxed">
-                                    {{ Str::limit($task->description, 140) }}
-                                </p>
-                            @endif
-                        </div>
-
-                        <div class="flex items-center gap-2 flex-wrap">
-                            @if($task->due_date)
-                                <span class="badge badge-blue">
-                                    📅 {{ \Carbon\Carbon::parse($task->due_date)->format('d M Y') }}
-                                </span>
-                            @endif
-                            <span class="badge badge-purple">IN PROGRESS</span>
-                        </div>
+                @if($nearestTask)
+                    <div class="space-y-2">
+                        <h3 class="text-2xl font-bold text-white">
+                            {{ \Carbon\Carbon::parse($nearestTask->due_date)->format('d M Y') }}
+                        </h3>
+                        <p class="text-red-400 text-sm font-medium">{{ $nearestTask->title }}</p>
                     </div>
-                @empty
-                    <div class="premium-card p-8 text-center">
-                        <p class="text-slate-300 text-sm">Belum ada upcoming task 📌</p>
+                @else
+                    <div class="space-y-2">
+                        <h3 class="text-2xl font-bold text-gray-500">No Deadline</h3>
+                        <p class="text-gray-600 text-sm">All tasks completed!</p>
                     </div>
-                @endforelse
+                @endif
+            </div>
+            <div class="absolute -bottom-4 -right-4 w-24 h-24 bg-red-500/10 rounded-full blur-2xl"></div>
+        </a>
+    </div>
+
+    {{-- Upcoming Tasks Section --}}
+    <div class="glass-card rounded-2xl p-6 lg:p-8">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-white">Upcoming Tasks</h2>
+            </div>
+
+            <div class="flex items-center gap-3">
+                {{-- Filter Buttons --}}
+                <div class="hidden md:flex items-center gap-2">
+                    <a href="{{ route('dashboard', ['filter' => 'todo']) }}"
+                       class="px-4 py-2 bg-green-500/20 text-green-400 text-sm font-semibold rounded-xl hover:bg-green-500/30 transition-all">
+                        <span class="flex items-center gap-2">
+                            <span class="w-2 h-2 bg-green-400 rounded-full"></span>
+                            To do
+                        </span>
+                    </a>
+                    <a href="{{ route('dashboard', ['filter' => 'work']) }}"
+                       class="px-4 py-2 bg-slate-800/50 text-gray-400 text-sm font-semibold rounded-xl hover:bg-slate-700/50 transition-all">
+                        Work
+                    </a>
+                    <a href="{{ route('dashboard', ['filter' => 'high']) }}"
+                       class="px-4 py-2 bg-slate-800/50 text-gray-400 text-sm font-semibold rounded-xl hover:bg-slate-700/50 transition-all">
+                        High priority
+                    </a>
+                    <button class="p-2 bg-slate-800/50 text-gray-400 rounded-xl hover:bg-slate-700/50 transition-all">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                        </svg>
+                    </button>
+                </div>
+
+                {{-- Show All Button --}}
+                @php
+                    $hasFilter = request('filter') || request('status');
+                @endphp
+                @if(request('view') === 'deadlines')
+                    <a href="{{ route('dashboard') }}"
+                       class="px-4 py-2 bg-slate-800/50 hover:bg-slate-700/50 text-white text-sm font-semibold rounded-xl transition-all">
+                        Show Recent
+                    </a>
+                @else
+                    @if($hasFilter)
+                        <a href="{{ route('dashboard') }}"
+                           class="px-4 py-2 bg-slate-800/50 hover:bg-slate-700/50 text-white text-sm font-semibold rounded-xl transition-all">
+                            Show Recent
+                        </a>
+                    @endif
+                    <a href="{{ route('dashboard', ['view' => 'deadlines']) }}"
+                       class="px-4 py-2 bg-slate-800/50 hover:bg-slate-700/50 text-white text-sm font-semibold rounded-xl transition-all">
+                        Show All ({{ Auth::user()->tasks()->count() }})
+                    </a>
+                @endif
+            </div>
+        </div>
+
+        {{-- Task Cards Grid --}}
+        @php
+            $filter = request('filter');
+            $statusFilter = request('status');
+            $taskQuery = Auth::user()->tasks();
+            if (in_array($statusFilter, ['berjalan', 'selesai'])) {
+                $taskQuery->where('status', $statusFilter);
+            }
+            if ($filter === 'todo') {
+                $taskQuery->where('status', 'berjalan');
+            } elseif ($filter === 'work') {
+                $taskQuery->where('category', 'Work');
+            } elseif ($filter === 'high') {
+                $taskQuery->where('priority', 'high');
+            }
+
+            $upcomingTasks = (clone $taskQuery)
+                ->orderBy('created_at', 'desc')
+                ->limit(4)
+                ->get();
+            $deadlineTasks = (clone $taskQuery)
+                ->whereNotNull('due_date')
+                ->orderBy('due_date', 'asc')
+                ->get();
+            $deadlineGroups = $deadlineTasks->groupBy(function ($task) {
+                return \Carbon\Carbon::parse($task->due_date)->format('Y-m-d');
+            });
+        @endphp
+
+        @if(request('view') === 'deadlines')
+            @if($deadlineGroups->count() > 0)
+                <div class="space-y-5">
+                    @foreach($deadlineGroups as $deadlineKey => $groupTasks)
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h4 class="text-sm font-semibold text-blue-100">
+                                    {{ \Carbon\Carbon::parse($deadlineKey)->format('d M Y') }}
+                                </h4>
+                                <span class="text-xs text-blue-100/60">{{ $groupTasks->count() }} task</span>
+                            </div>
+                            <div class="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
+                                @foreach($groupTasks as $task)
+                                    <div class="min-w-[260px] max-w-[260px] glass-card rounded-2xl p-4">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-xs px-2 py-1 rounded-full bg-blue-500/15 border border-blue-400/20 text-blue-100">
+                                                {{ $task->category ?? 'Tanpa kategori' }}
+                                            </span>
+                                            @if(($task->status ?? '') === 'selesai')
+                                                <span class="text-xs px-2 py-1 rounded-full bg-green-500/15 border border-green-400/20 text-green-100">
+                                                    SELESAI
+                                                </span>
+                                            @else
+                                                <span class="text-xs px-2 py-1 rounded-full bg-purple-500/15 border border-purple-400/20 text-purple-100">
+                                                    IN PROGRESS
+                                                </span>
+                                            @endif
+                                        </div>
+                                        <h5 class="mt-3 text-white font-semibold text-sm line-clamp-2">
+                                            {{ $task->title ?? 'Untitled' }}
+                                        </h5>
+                                        <p class="mt-2 text-xs text-blue-100/70 line-clamp-2">
+                                            {{ $task->description ?? '-' }}
+                                        </p>
+                                        <div class="mt-4 flex items-center justify-between">
+                                            <span class="text-xs text-blue-100/60">
+                                                {{ $task->created_at ? $task->created_at->format('d M Y') : '-' }}
+                                            </span>
+                                            <a href="{{ route('tasks.edit', $task) }}"
+                                                class="text-xs font-semibold text-blue-300 hover:text-blue-200 transition">
+                                                Edit
+                                            </a>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="flex flex-col items-center justify-center py-16 text-center">
+                    <div class="w-24 h-24 mb-6 bg-slate-800/50 rounded-3xl flex items-center justify-center">
+                        <svg class="w-12 h-12 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-2">No Tasks Yet!</h3>
+                </div>
+            @endif
+        @else
+            @if($upcomingTasks->count() > 0)
+                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
+                    @foreach($upcomingTasks as $task)
+                        @include('components.task-card', ['task' => $task])
+                    @endforeach
+                </div>
+            @else
+                {{-- Empty State --}}
+                <div class="flex flex-col items-center justify-center py-16 text-center">
+                    <div class="w-24 h-24 mb-6 bg-slate-800/50 rounded-3xl flex items-center justify-center">
+                        <svg class="w-12 h-12 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-2">No Tasks Yet!</h3>
+                </div>
+            @endif
+        @endif
+    </div>
+
+    {{-- Productivity Stats --}}
+    <div class="glass-card rounded-2xl p-6 lg:p-8">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                </svg>
+                Productivity Overview
+            </h3>
+            <span class="px-4 py-2 bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-400 rounded-xl font-bold text-lg">
+                {{ $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0 }}% Complete
+            </span>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="text-center p-4 bg-slate-800/30 rounded-xl">
+                <p class="text-gray-400 text-sm mb-1">This Week</p>
+                <p class="text-2xl font-bold text-white">
+                    {{ Auth::user()->tasks()->where('created_at', '>=', now()->startOfWeek())->count() }}
+                </p>
+            </div>
+            <div class="text-center p-4 bg-slate-800/30 rounded-xl">
+                <p class="text-gray-400 text-sm mb-1">This Month</p>
+                <p class="text-2xl font-bold text-white">
+                    {{ Auth::user()->tasks()->whereMonth('created_at', now()->month)->count() }}
+                </p>
+            </div>
+            <div class="text-center p-4 bg-slate-800/30 rounded-xl">
+                <p class="text-gray-400 text-sm mb-1">Overdue</p>
+                <p class="text-2xl font-bold text-red-400">
+                    {{ Auth::user()->tasks()->where('status', 'berjalan')->where('due_date', '<', now())->count() }}
+                </p>
+            </div>
+            <div class="text-center p-4 bg-slate-800/30 rounded-xl">
+                <p class="text-gray-400 text-sm mb-1">Avg. Daily</p>
+                <p class="text-2xl font-bold text-white">
+                    {{ Auth::user()->tasks()->count() > 0 ? round(Auth::user()->tasks()->count() / 30) : 0 }}
+                </p>
             </div>
         </div>
     </div>
-
-    {{-- Script Modal --}}
-    <script>
-        function openUpcomingModal() {
-            const modal = document.getElementById('upcomingModal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeUpcomingModal() {
-            const modal = document.getElementById('upcomingModal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            document.body.style.overflow = '';
-        }
-
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') closeUpcomingModal();
-        });
-    </script>
-
+</div>
 @endsection
-
-<style>
-    /* Premium Card Style */
-    .premium-card {
-        background: rgba(15, 23, 42, 0.7);
-        backdrop-filter: blur(24px);
-        -webkit-backdrop-filter: blur(24px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 24px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .hover-lift:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6);
-        border-color: rgba(255, 255, 255, 0.2);
-    }
-
-    /* Gradient Text */
-    .gradient-text {
-        background: linear-gradient(135deg, #60a5fa, #a78bfa);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .gradient-text-green {
-        background: linear-gradient(135deg, #34d399, #10b981);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    /* Icon Wrapper */
-    .icon-wrapper {
-        padding: 1rem;
-        border-radius: 16px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-    }
-
-    .hover-lift:hover .icon-wrapper {
-        transform: scale(1.1) rotate(5deg);
-    }
-
-    /* Badge Styles */
-    .badge {
-        padding: 0.5rem 1rem;
-        border-radius: 999px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        transition: all 0.3s ease;
-    }
-
-    .badge-blue {
-        background: rgba(96, 165, 250, 0.2);
-        color: #60a5fa;
-        border: 1px solid rgba(96, 165, 250, 0.3);
-    }
-
-    .badge-green {
-        background: rgba(52, 211, 153, 0.2);
-        color: #34d399;
-        border: 1px solid rgba(52, 211, 153, 0.3);
-    }
-
-    .badge-yellow {
-        background: rgba(251, 191, 36, 0.2);
-        color: #fbbf24;
-        border: 1px solid rgba(251, 191, 36, 0.3);
-    }
-
-    .badge-red {
-        background: rgba(248, 113, 113, 0.2);
-        color: #f87171;
-        border: 1px solid rgba(248, 113, 113, 0.3);
-    }
-
-    .badge-purple {
-        background: rgba(167, 139, 250, 0.2);
-        color: #a78bfa;
-        border: 1px solid rgba(167, 139, 250, 0.3);
-    }
-
-    /* Task Card */
-    .task-card {
-        background: rgba(15, 23, 42, 0.7);
-        backdrop-filter: blur(24px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 20px;
-        padding: 1.75rem;
-        transition: all 0.3s ease;
-    }
-
-    .task-card:hover {
-        transform: translateX(8px);
-        border-color: rgba(96, 165, 250, 0.3);
-        box-shadow: 0 8px 24px rgba(96, 165, 250, 0.2);
-    }
-
-    /* Calendar Date */
-    .calendar-date {
-        background: linear-gradient(135deg, rgba(96, 165, 250, 0.2), rgba(167, 139, 250, 0.2));
-        border-radius: 20px;
-        padding: 2rem;
-        text-align: center;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    /* Event Card */
-    .event-card {
-        background: rgba(15, 23, 42, 0.6);
-        backdrop-filter: blur(16px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 16px;
-        padding: 1.25rem;
-        transition: all 0.3s ease;
-    }
-
-    .event-card:hover {
-        border-color: rgba(167, 139, 250, 0.3);
-        transform: translateX(4px);
-    }
-
-    .event-date {
-        background: linear-gradient(135deg, rgba(167, 139, 250, 0.3), rgba(236, 72, 153, 0.3));
-        border-radius: 12px;
-        padding: 0.75rem 1rem;
-        text-align: center;
-        min-width: 70px;
-    }
-
-    /* Empty State */
-    .empty-state {
-        background: rgba(15, 23, 42, 0.5);
-        backdrop-filter: blur(24px);
-        border: 2px dashed rgba(255, 255, 255, 0.1);
-        border-radius: 24px;
-        padding: 4rem 2rem;
-    }
-
-    .empty-icon {
-        font-size: 5rem;
-        margin-bottom: 1rem;
-        animation: float 3s ease-in-out infinite;
-    }
-
-    /* Animations */
-    @keyframes shimmer {
-        0% {
-            transform: translateX(-100%);
-        }
-
-        100% {
-            transform: translateX(100%);
-        }
-    }
-
-    @keyframes float {
-
-        0%,
-        100% {
-            transform: translateY(0px);
-        }
-
-        50% {
-            transform: translateY(-20px);
-        }
-    }
-
-    .animate-shimmer {
-        animation: shimmer 2s infinite;
-    }
-
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-        width: 10px;
-    }
-
-    ::-webkit-scrollbar-track {
-        background: rgba(15, 23, 42, 0.5);
-        border-radius: 10px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: rgba(96, 165, 250, 0.3);
-        border-radius: 10px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-        background: rgba(96, 165, 250, 0.5);
-    }
-</style>
